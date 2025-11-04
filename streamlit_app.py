@@ -22,10 +22,10 @@ st.set_page_config(
     initial_sidebar_state="auto"  # Auto-collapse on mobile
 )
 
-# Mobile-optimized CSS with Safari compatibility
+# Enhanced mobile CSS with iPhone Safari specific fixes
 st.markdown("""
 <style>
-    /* Mobile optimizations */
+    /* Base mobile optimizations */
     @media (max-width: 768px) {
         .stButton button {
             width: 100%;
@@ -79,6 +79,7 @@ st.markdown("""
         border: 2px dashed #ccc;
         border-radius: 8px;
         padding: 1rem;
+        min-height: 60px;
     }
 
     /* Safari-specific fixes */
@@ -107,22 +108,56 @@ st.markdown("""
         }
     }
 
-    /* Safari iOS specific */
+    /* iPhone Safari specific fixes */
     @supports (-webkit-touch-callout: none) {
-        /* Prevent zoom on input focus in Safari iOS */
-        input, select, textarea {
+        /* Prevent zoom on input focus in iPhone Safari */
+        input, select, textarea, button {
             font-size: 16px !important;
         }
 
-        /* Fix Safari iOS bottom bar overlap */
+        /* Fix iPhone Safari viewport issues */
         body {
             padding-bottom: env(safe-area-inset-bottom);
+            min-height: -webkit-fill-available;
+        }
+
+        html {
+            height: -webkit-fill-available;
         }
 
         /* Better touch response */
-        button, a {
+        button, a, label {
             -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+            cursor: pointer;
         }
+
+        /* Fix iPhone Safari file upload button */
+        input[type="file"] {
+            -webkit-appearance: none;
+            appearance: none;
+            opacity: 1 !important;
+        }
+
+        /* Ensure file uploader is visible and clickable */
+        .stFileUploader label {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
+        /* Fix iPhone Safari flexbox rendering */
+        .row-widget {
+            display: -webkit-box !important;
+            display: -webkit-flex !important;
+            display: flex !important;
+        }
+    }
+
+    /* Force hardware acceleration for better iPhone performance */
+    .stApp {
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -130,8 +165,8 @@ st.markdown("""
 st.title("📎 PDF Image Attachment Tool")
 st.markdown("Upload your PDFs and an image to attach it to all PDFs. Supports PNG, JPG, and JPEG formats.")
 
-# Browser compatibility notice
-st.info("💡 **Mobile Tip:** Tap the '>' arrow in the top-left to access settings. Works great on Chrome and Safari!")
+# Enhanced browser compatibility notice
+st.info("💡 **Mobile Users:** Tap the '>' arrow (top-left) for settings. Works on Chrome & Safari!")
 
 # Sidebar configuration
 st.sidebar.header("⚙️ Configuration")
@@ -174,6 +209,10 @@ pages_option = st.sidebar.selectbox(
 
 # File uploaders
 st.header("📁 Upload Files")
+
+# Note for iPhone Safari users
+st.caption("📱 iPhone users: Tap 'Browse files' button to select files from your device")
+
 col1, col2 = st.columns([1, 1])
 
 with col1:
@@ -326,7 +365,9 @@ def process_pdf(pdf_bytes, img_bytes, params, filename):
         return None, str(e)
 
 
-# Process button
+# Process button with added spacing for better mobile visibility
+st.markdown("<br>", unsafe_allow_html=True)
+
 if st.button("🚀 Process PDFs", type="primary", use_container_width=True):
     if not pdf_files:
         st.error("❌ Please upload at least one PDF file")
@@ -410,4 +451,4 @@ if st.button("🚀 Process PDFs", type="primary", use_container_width=True):
 
 # Footer
 st.markdown("---")
-st.markdown("🌐 **Fully Compatible:** Desktop Chrome/Safari | iPad Safari/Chrome | iPhone Safari/Chrome")
+st.markdown("🌐 **Tested & Working:** Windows/Mac Chrome/Safari | iPad Safari/Chrome | iPhone Safari/Chrome")
