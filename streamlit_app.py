@@ -296,5 +296,4 @@ if st.button("🚀 Process PDFs", type="primary", use_container_width=True):
                 )
 
 # Footer
-st.markdown("---")
-st.markdown("Made with ❤️ using Streamlit | Supports PNG, JPG, and JPEG images")
+klwong327
