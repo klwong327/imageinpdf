@@ -2,6 +2,7 @@
 """
 PDF Image Attachment Web App
 Upload PDFs and an image, then download modified PDFs with the image attached.
+Supports PNG, JPG, and JPEG image formats.
 """
 
 import streamlit as st
@@ -19,7 +20,7 @@ st.set_page_config(
 )
 
 st.title("📎 PDF Image Attachment Tool")
-st.markdown("Upload your PDFs and a PNG image to attach the image to all PDFs.")
+st.markdown("Upload your PDFs and an image to attach it to all PDFs. Supports PNG, JPG, and JPEG formats.")
 
 # Sidebar configuration
 st.sidebar.header("⚙️ Configuration")
@@ -77,8 +78,8 @@ with col1:
 with col2:
     st.subheader("Image File")
     image_file = st.file_uploader(
-        "Upload PNG image",
-        type=['png'],
+        "Upload Image (PNG/JPG/JPEG)",
+        type=['png', 'jpg', 'jpeg'],
         key="image"
     )
     if image_file:
@@ -296,4 +297,4 @@ if st.button("🚀 Process PDFs", type="primary", use_container_width=True):
 
 # Footer
 st.markdown("---")
-st.markdown("Made with ❤️ using Streamlit | PDF processing with PyPDF2 & ReportLab")
+st.markdown("Made with ❤️ using Streamlit | Supports PNG, JPG, and JPEG images")
