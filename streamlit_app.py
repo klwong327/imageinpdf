@@ -3,6 +3,7 @@
 PDF Image Attachment Web App
 Upload PDFs and an image, then download modified PDFs with the image attached.
 Supports PNG, JPG, and JPEG image formats.
+Mobile-optimized for iPad and iPhone.
 """
 
 import streamlit as st
@@ -16,11 +17,76 @@ import zipfile
 st.set_page_config(
     page_title="PDF Image Attacher",
     page_icon="📎",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="auto"  # Auto-collapse on mobile
 )
+
+# Mobile-optimized CSS
+st.markdown("""
+<style>
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+        .stButton button {
+            width: 100%;
+            font-size: 16px;
+            padding: 12px;
+            min-height: 48px;
+        }
+
+        .stDownloadButton button {
+            width: 100%;
+            font-size: 16px;
+            padding: 12px;
+            min-height: 48px;
+        }
+
+        /* Larger touch targets */
+        .stFileUploader {
+            font-size: 16px;
+        }
+
+        /* Better spacing on mobile */
+        .element-container {
+            margin-bottom: 1rem;
+        }
+
+        /* Make sliders easier to use on touch */
+        .stSlider {
+            padding: 10px 0;
+        }
+
+        /* Better mobile header */
+        h1 {
+            font-size: 1.5rem !important;
+        }
+        h2 {
+            font-size: 1.2rem !important;
+        }
+        h3 {
+            font-size: 1.1rem !important;
+        }
+    }
+
+    /* Responsive images */
+    .stImage {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* Improve file uploader visibility */
+    .stFileUploader > div {
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 st.title("📎 PDF Image Attachment Tool")
 st.markdown("Upload your PDFs and an image to attach it to all PDFs. Supports PNG, JPG, and JPEG formats.")
+
+# Mobile device hint
+st.info("💡 **Mobile Tip:** Tap the '>' arrow in the top-left to access settings.")
 
 # Sidebar configuration
 st.sidebar.header("⚙️ Configuration")
@@ -28,7 +94,8 @@ st.sidebar.header("⚙️ Configuration")
 position = st.sidebar.selectbox(
     "Image Position",
     ["bottom-right", "bottom-left", "top-right", "top-left", "center", "custom"],
-    index=0
+    index=0,
+    help="Choose where to place the image on the PDF"
 )
 
 use_scale = st.sidebar.checkbox("Use Scale Factor", value=False)
@@ -62,7 +129,7 @@ pages_option = st.sidebar.selectbox(
 
 # File uploaders
 st.header("📁 Upload Files")
-col1, col2 = st.columns(2)
+col1, col2 = st.columns([1, 1])
 
 with col1:
     st.subheader("PDF Files")
@@ -70,7 +137,8 @@ with col1:
         "Upload PDF files",
         type=['pdf'],
         accept_multiple_files=True,
-        key="pdfs"
+        key="pdfs",
+        help="Select one or more PDF files from your device"
     )
     if pdf_files:
         st.success(f"✓ {len(pdf_files)} PDF(s) uploaded")
@@ -80,13 +148,14 @@ with col2:
     image_file = st.file_uploader(
         "Upload Image (PNG/JPG/JPEG)",
         type=['png', 'jpg', 'jpeg'],
-        key="image"
+        key="image",
+        help="Select an image file to attach to PDFs"
     )
     if image_file:
         st.success("✓ Image uploaded")
-        # Show preview
+        # Show preview with responsive sizing
         img_preview = Image.open(image_file)
-        st.image(img_preview, caption="Image Preview", width=200)
+        st.image(img_preview, caption="Image Preview", use_column_width=True)
         image_file.seek(0)  # Reset file pointer
 
 
@@ -250,18 +319,17 @@ if st.button("🚀 Process PDFs", type="primary", use_container_width=True):
         # Process each PDF
         progress_bar = st.progress(0)
         for idx, pdf_file in enumerate(pdf_files):
-            st.write(f"Processing: **{pdf_file.name}**")
+            with st.spinner(f"Processing: {pdf_file.name}..."):
+                pdf_bytes = pdf_file.read()
+                result_bytes, error = process_pdf(pdf_bytes, image_bytes, params, pdf_file.name)
 
-            pdf_bytes = pdf_file.read()
-            result_bytes, error = process_pdf(pdf_bytes, image_bytes, params, pdf_file.name)
+                if result_bytes:
+                    st.success(f"✓ {pdf_file.name} processed successfully")
+                    processed_files.append((pdf_file.name, result_bytes))
+                else:
+                    st.error(f"✗ Error processing {pdf_file.name}: {error}")
 
-            if result_bytes:
-                st.success(f"✓ {pdf_file.name} processed successfully")
-                processed_files.append((pdf_file.name, result_bytes))
-            else:
-                st.error(f"✗ Error processing {pdf_file.name}: {error}")
-
-            progress_bar.progress((idx + 1) / len(pdf_files))
+                progress_bar.progress((idx + 1) / len(pdf_files))
 
         # Provide downloads
         if processed_files:
@@ -296,4 +364,4 @@ if st.button("🚀 Process PDFs", type="primary", use_container_width=True):
                 )
 
 # Footer
-
+st.markdown("For limited user by klwong327")
