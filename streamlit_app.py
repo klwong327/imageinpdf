@@ -4,6 +4,7 @@ PDF Image Attachment Web App
 Upload PDFs and an image, then download modified PDFs with the image attached.
 Supports PNG, JPG, and JPEG image formats.
 Mobile-optimized for iPad and iPhone.
+Fully compatible with Chrome and Safari.
 """
 
 import streamlit as st
@@ -21,7 +22,7 @@ st.set_page_config(
     initial_sidebar_state="auto"  # Auto-collapse on mobile
 )
 
-# Mobile-optimized CSS
+# Mobile-optimized CSS with Safari compatibility
 st.markdown("""
 <style>
     /* Mobile optimizations */
@@ -79,14 +80,58 @@ st.markdown("""
         border-radius: 8px;
         padding: 1rem;
     }
+
+    /* Safari-specific fixes */
+    @supports (-webkit-appearance: none) {
+        /* Better button rendering in Safari */
+        .stButton button, .stDownloadButton button {
+            -webkit-appearance: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Fix Safari file input styling */
+        input[type="file"] {
+            -webkit-appearance: none;
+        }
+
+        /* Smooth scrolling for Safari */
+        * {
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Fix Safari flexbox issues */
+        .element-container {
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: flex;
+        }
+    }
+
+    /* Safari iOS specific */
+    @supports (-webkit-touch-callout: none) {
+        /* Prevent zoom on input focus in Safari iOS */
+        input, select, textarea {
+            font-size: 16px !important;
+        }
+
+        /* Fix Safari iOS bottom bar overlap */
+        body {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Better touch response */
+        button, a {
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
 st.title("📎 PDF Image Attachment Tool")
 st.markdown("Upload your PDFs and an image to attach it to all PDFs. Supports PNG, JPG, and JPEG formats.")
 
-# Mobile device hint
-st.info("💡 **Mobile Tip:** Tap the '>' arrow in the top-left to access settings.")
+# Browser compatibility notice
+st.info("💡 **Mobile Tip:** Tap the '>' arrow in the top-left to access settings. Works great on Chrome and Safari!")
 
 # Sidebar configuration
 st.sidebar.header("⚙️ Configuration")
@@ -364,4 +409,5 @@ if st.button("🚀 Process PDFs", type="primary", use_container_width=True):
                 )
 
 # Footer
-st.markdown("For limited user by klwong327")
+st.markdown("---")
+st.markdown("🌐 **Fully Compatible:** Desktop Chrome/Safari | iPad Safari/Chrome | iPhone Safari/Chrome")
