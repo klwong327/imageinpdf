@@ -232,7 +232,3 @@ if st.button("🚀 Process PDFs", type="primary", use_container_width=True):
                     mime="application/zip",
                     use_container_width=True,
                 )
-
-
-st.markdown("---")
-st.markdown("✅ **Tested & Working:** Windows/Mac, Chrome/Safari, iPad Safari/Chrome, iPhone Safari/Chrome")[file:1]
