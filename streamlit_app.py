@@ -131,20 +131,27 @@ def convert_numbers_to_pdf(numbers_bytes, original_name):
 
 st.markdown("<br>", unsafe_allow_html=True)
 
+# Process button with added spacing for better mobile visibility
+st.markdown("", unsafe_allow_html=True)
+
 if st.button("🚀 Process PDFs", type="primary", use_container_width=True):
     if not pdf_files and not numbers_files:
         st.error("❌ Please upload at least one PDF or .numbers file")
     elif not image_file:
         st.error("❌ Please upload an image file")
     else:
+        # Read image once
         image_bytes = image_file.read()
-        
-        # Map pages option (existing)
+
+        # Map pages option to internal format
         pages_map = {
             "All Pages": "all",
-            "First Page Only": "first", 
-            "Last Page Only": "last"
+            "First Page Only": "first",
+            "Last Page Only": "last",
         }
+
+        # Prepare parameters (img_width, img_height, scale_factor, etc.
+        # are already defined in the sidebar section above)
         params = {
             "img_width": img_width,
             "img_height": img_height,
@@ -155,72 +162,77 @@ if st.button("🚀 Process PDFs", type="primary", use_container_width=True):
             "margin_y": margin_y,
             "custom_x": custom_x,
             "custom_y": custom_y,
-            "pages": pages_map[pages_option]
+            "pages": pages_map[pages_option],
         }
-        
+
+        st.header("📥 Download Processed PDFs")
         processed_files = []
+
+        # Process existing PDF uploads
+        total_pdf = len(pdf_files) if pdf_files else 0
+        total_numbers = len(numbers_files) if numbers_files else 0
+        total_files = total_pdf + total_numbers
         progress_bar = st.progress(0)
-        
-        # Process original PDFs (existing)
-        for idx, pdf_file in enumerate(pdf_files or []):
-            with st.spinner(f"Processing {pdf_file.name}..."):
-                pdf_bytes = pdf_file.read()
-                result_bytes, error = process_pdf(pdf_bytes, image_bytes, params, pdf_file.name)
-                if result_bytes:
-                    st.success(f"✅ {pdf_file.name} processed successfully")
-                    processed_files.append((pdf_file.name, result_bytes))
-                else:
-                    st.error(f"❌ Error processing {pdf_file.name}: {error}")
-            progress_bar.progress((idx + 1) / max(1, len(pdf_files)))
-        
-        # New: Process .numbers files - convert then attach image
-        numbers_count = len(numbers_files or [])
-        for idx, numbers_file in enumerate(numbers_files or []):
-            with st.spinner(f"Converting & processing {numbers_file.name}..."):
-                numbers_bytes = numbers_file.read()
-                conv_bytes, conv_error = convert_numbers_to_pdf(numbers_bytes, numbers_file.name)
-                if conv_bytes:
-                    # Now process the converted PDF with image
-                    result_bytes, error = process_pdf(conv_bytes, image_bytes, params, numbers_file.name)
+        done = 0
+
+        # 1) PDFs
+        if pdf_files:
+            for pdf_file in pdf_files:
+                with st.spinner(f"Processing: {pdf_file.name}..."):
+                    pdf_bytes = pdf_file.read()
+                    result_bytes, error = process_pdf(pdf_bytes, image_bytes, params, pdf_file.name)
                     if result_bytes:
-                        new_name = numbers_file.name.replace('.numbers', '_converted.pdf')
-                        st.success(f"✅ {numbers_file.name} → PDF processed successfully")
+                        st.success(f"✓ {pdf_file.name} processed successfully")
+                        processed_files.append((pdf_file.name, result_bytes))
+                    else:
+                        st.error(f"✗ Error processing {pdf_file.name}: {error}")
+                done += 1
+                progress_bar.progress(done / total_files)
+
+        # 2) .numbers -> PDF -> attach image
+        if numbers_files:
+            for nf in numbers_files:
+                with st.spinner(f"Converting & processing: {nf.name}..."):
+                    numbers_bytes = nf.read()
+                    conv_pdf_bytes = numbers_to_blank_pdf(numbers_bytes, nf.name)
+                    result_bytes, error = process_pdf(conv_pdf_bytes, image_bytes, params, nf.name)
+                    if result_bytes:
+                        new_name = nf.name.replace(".numbers", "_converted.pdf")
+                        st.success(f"✓ {nf.name} converted and processed successfully")
                         processed_files.append((new_name, result_bytes))
                     else:
-                        st.error(f"❌ Error attaching image to {numbers_file.name}: {error}")
-                else:
-                    st.error(f"❌ Conversion failed for {numbers_file.name}: {conv_error}")
-            progress_bar.progress(1 - (numbers_count - idx - 1) / max(1, numbers_count))
-        
+                        st.error(f"✗ Error processing converted {nf.name}: {error}")
+                done += 1
+                progress_bar.progress(done / total_files)
+
+        # Provide downloads (same pattern as your original)
         if processed_files:
-            st.success(f"🎉 Successfully processed {len(processed_files)} file(s)!")
-            
-            st.header("⬇️ Download Processed PDFs")
-            
+            st.success(f"🎉 Successfully processed {len(processed_files)} file(s)")
+
             if len(processed_files) == 1:
-                filename = processed_files[0][0].replace('.pdf', '_withimage.pdf')
+                filename = processed_files[0][0].replace(".pdf", "_with_image.pdf")
                 st.download_button(
-                    label=f"📥 Download {filename}",
+                    label=f"⬇️ Download {filename}",
                     data=processed_files[0][1],
                     file_name=filename,
                     mime="application/pdf",
-                    use_container_width=True
+                    use_container_width=True,
                 )
             else:
-                # ZIP multiple (existing logic)
                 zip_buffer = BytesIO()
-                with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                    for orig_name, file_bytes in processed_files:
-                        new_filename = orig_name.replace('.pdf', '_withimage.pdf')
+                with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+                    for filename, file_bytes in processed_files:
+                        new_filename = filename.replace(".pdf", "_with_image.pdf")
                         zip_file.writestr(new_filename, file_bytes)
                 zip_buffer.seek(0)
                 st.download_button(
-                    label=f"📦 Download All ({len(processed_files)} PDFs) as ZIP",
+                    label=f"⬇️ Download All ({len(processed_files)} PDFs) as ZIP",
                     data=zip_buffer.getvalue(),
                     file_name="processed_pdfs.zip",
                     mime="application/zip",
-                    use_container_width=True
+                    use_container_width=True,
                 )
+
 
 st.markdown("---")
 st.markdown("✅ **Tested & Working:** Windows/Mac, Chrome/Safari, iPad Safari/Chrome, iPhone Safari/Chrome")[file:1]
